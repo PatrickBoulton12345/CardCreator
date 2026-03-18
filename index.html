@@ -266,6 +266,12 @@ input[type="text"]:focus {
 
 .btn-add:hover { color: #fff; border-color: #888; }
 
+.warning {
+  font-size: 12px;
+  color: #ff3333;
+  margin-top: 6px;
+}
+
 .hint {
   font-size: 12px;
   color: #555;
@@ -362,6 +368,7 @@ canvas {
     <div class="control-group">
       <label>2. Enter Phrase</label>
       <textarea id="phraseInput" placeholder="" spellcheck="false"></textarea>
+      <p class="warning" id="lineWarning" style="display:none;">Functionality past three lines not guaranteed. Please try and shorten the phrase.</p>
     </div>
 
     <div class="control-group">
@@ -636,6 +643,8 @@ function render() {
     }
   }
   if (currentLine) lines.push(currentLine);
+
+  document.getElementById('lineWarning').style.display = lines.length > 3 ? 'block' : 'none';
 
   const textBlockHeight = lines.length * lineHeight;
   // Position text so it's visible in the profile grid centre crop
