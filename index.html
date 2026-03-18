@@ -498,7 +498,7 @@ function render() {
   const targetPhrases = targetInput.split(',').map(p => p.trim()).filter(Boolean);
   const padding = 120;
   const maxWidth = W - padding * 2;
-  const fontSize = 82;
+  const fontSize = 87;
   const lineHeight = fontSize * 1.15;
 
   ctx.font = `700 ${fontSize}px Octarine, Arial, sans-serif`;
@@ -526,11 +526,13 @@ function render() {
   const textStartY = Math.round(H * 0.63);
 
   // Black gradient fade behind text
-  const gradientTop = textStartY - 180;
+  // Gradient starts at 50% of screen height
+  const gradientTop = Math.round(H * 0.5);
   const grad = ctx.createLinearGradient(0, gradientTop, 0, H);
   grad.addColorStop(0, 'rgba(0,0,0,0)');
-  grad.addColorStop(0.35, 'rgba(0,0,0,0.75)');
-  grad.addColorStop(1, 'rgba(0,0,0,0.92)');
+  grad.addColorStop(0.3, 'rgba(0,0,0,0.6)');
+  grad.addColorStop(0.6, 'rgba(0,0,0,0.82)');
+  grad.addColorStop(1, 'rgba(0,0,0,0.95)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, gradientTop, W, H - gradientTop);
 
