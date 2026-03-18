@@ -521,7 +521,8 @@ function render() {
   if (currentLine) lines.push(currentLine);
 
   const textBlockHeight = lines.length * lineHeight;
-  const textStartY = H - textBlockHeight - padding - 80;
+  // Position text so it's visible in the profile grid centre crop
+  const textStartY = Math.round(H * 0.63);
 
   // Black gradient fade behind text
   const gradientTop = textStartY - 180;
