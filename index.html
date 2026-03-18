@@ -271,7 +271,7 @@ canvas {
 
     <div class="control-group">
       <label>3. Target Word</label>
-      <input type="text" id="targetWord" placeholder="e.g. POWERFUL" spellcheck="false">
+      <input type="text" id="targetWord" placeholder="e.g. POWERFUL or MAKE BRITAIN, AGAIN" spellcheck="false">
       <div class="colour-picker">
         <div class="swatch selected" data-colour="#FE5500" style="background:#FE5500;" title="Orange"></div>
         <div class="swatch" data-colour="#EE9944" style="background:#EE9944;" title="Yellow"></div>
@@ -280,7 +280,7 @@ canvas {
         <div class="swatch" data-colour="#FFFFFF" style="background:#FFFFFF;" title="White"></div>
         <div class="swatch" data-colour="#000000" style="background:#000000;" title="Black"></div>
       </div>
-      <p class="hint">This word will appear in the selected colour</p>
+      <p class="hint">Separate with commas for multiple targets. Adjacent words need no comma.</p>
     </div>
 
     <button class="btn btn-download" id="downloadBtn" disabled>
@@ -404,7 +404,9 @@ function render() {
   const phrase = phraseInput.value.trim().toUpperCase();
   if (!phrase) return;
 
-  const target = targetWord.value.trim().toUpperCase();
+  // Parse target words: comma-separated phrases, each phrase can be multiple adjacent words
+  const targetInput = targetWord.value.trim().toUpperCase();
+  const targetPhrases = targetInput.split(',').map(p => p.trim()).filter(Boolean);
   const padding = 120;
   const maxWidth = W - padding * 2;
   const fontSize = 82;
@@ -442,7 +444,27 @@ function render() {
   ctx.fillStyle = grad;
   ctx.fillRect(0, gradientTop, W, H - gradientTop);
 
+  // Build a set of target word positions across all lines
+  const allWords = phrase.split(/\s+/);
+  const targetSet = new Set();
+  for (const tp of targetPhrases) {
+    const tpWords = tp.split(/\s+/);
+    for (let i = 0; i <= allWords.length - tpWords.length; i++) {
+      let match = true;
+      for (let k = 0; k < tpWords.length; k++) {
+        if (allWords[i + k].replace(/[^A-Z0-9]/g, '') !== tpWords[k].replace(/[^A-Z0-9]/g, '')) {
+          match = false;
+          break;
+        }
+      }
+      if (match) {
+        for (let k = 0; k < tpWords.length; k++) targetSet.add(i + k);
+      }
+    }
+  }
+
   // Draw each line with target word highlighting
+  let wordIndex = 0;
   for (let i = 0; i < lines.length; i++) {
     const y = textStartY + i * lineHeight;
     const lineWords = lines[i].split(/\s+/);
@@ -450,11 +472,10 @@ function render() {
 
     for (let j = 0; j < lineWords.length; j++) {
       const w = lineWords[j];
-      const isTarget = target && w.replace(/[^A-Z0-9]/g, '') === target.replace(/[^A-Z0-9]/g, '');
-
-      ctx.fillStyle = isTarget ? targetColour : '#ffffff';
+      ctx.fillStyle = targetSet.has(wordIndex) ? targetColour : '#ffffff';
       ctx.fillText(w, x, y);
       x += ctx.measureText(w + ' ').width;
+      wordIndex++;
     }
   }
 }
