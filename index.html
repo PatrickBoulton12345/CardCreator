@@ -233,7 +233,7 @@ input[type="text"]:focus {
   background: #000;
   border-radius: 12px;
   overflow: hidden;
-  aspect-ratio: 4/5;
+  aspect-ratio: 9/16;
   border: 1px solid #333;
 }
 
@@ -305,9 +305,9 @@ const targetWord = document.getElementById('targetWord');
 const downloadBtn = document.getElementById('downloadBtn');
 const uploadText = document.getElementById('uploadText');
 
-// Instagram feed ratio 4:5 (1080x1350)
+// Instagram Reels ratio 9:16 (1080x1920)
 const W = 1080;
-const H = 1350;
+const H = 1920;
 canvas.width = W;
 canvas.height = H;
 
@@ -405,7 +405,7 @@ function render() {
   if (!phrase) return;
 
   const target = targetWord.value.trim().toUpperCase();
-  const padding = 60;
+  const padding = 120;
   const maxWidth = W - padding * 2;
   const fontSize = 82;
   const lineHeight = fontSize * 1.15;
