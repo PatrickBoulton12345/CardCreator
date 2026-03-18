@@ -220,6 +220,52 @@ input[type="text"]:focus {
 
 .hex-input:focus { outline: none; border-color: #666; }
 
+.target-group {
+  margin-bottom: 12px;
+  padding: 12px;
+  background: #222;
+  border-radius: 8px;
+  position: relative;
+}
+
+.target-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.target-group-header input[type="text"] {
+  flex: 1;
+}
+
+.btn-remove {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: #333;
+  color: #888;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-remove:hover { background: #ff3333; color: #fff; }
+
+.btn-add {
+  background: #222;
+  color: #888;
+  border: 1px dashed #444;
+  padding: 10px;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.btn-add:hover { color: #fff; border-color: #888; }
+
 .hint {
   font-size: 12px;
   color: #555;
@@ -319,23 +365,9 @@ canvas {
     </div>
 
     <div class="control-group">
-      <label>3. Target Word</label>
-      <input type="text" id="targetWord" placeholder="e.g. POWERFUL or MAKE BRITAIN, AGAIN" spellcheck="false">
-      <div class="colour-picker">
-        <div class="swatch selected" data-colour="#FE5500" style="background:#FE5500;" title="Orange"></div>
-        <div class="swatch" data-colour="#FF0000" style="background:#FF0000;" title="Red"></div>
-        <div class="swatch" data-colour="#EE9944" style="background:#EE9944;" title="Yellow"></div>
-        <div class="swatch" data-colour="#FFED00" style="background:#FFED00;" title="Bright Yellow"></div>
-        <div class="swatch" data-colour="#79CAC4" style="background:#79CAC4;" title="Blue"></div>
-        <div class="swatch" data-colour="#EBE3D0" style="background:#EBE3D0;" title="Cream"></div>
-        <div class="swatch" data-colour="#FFFFFF" style="background:#FFFFFF;" title="White"></div>
-        <div class="swatch" data-colour="#000000" style="background:#000000;" title="Black"></div>
-        <div class="swatch swatch-custom" id="customSwatch" title="Custom colour">+</div>
-      </div>
-      <div class="custom-colour-row" id="customColourRow" style="display:none;">
-        <input type="color" id="colourPicker" value="#FF00FF">
-        <input type="text" id="hexInput" class="hex-input" placeholder="#FF00FF" maxlength="7" spellcheck="false">
-      </div>
+      <label>3. Target Words</label>
+      <div id="targetGroups"></div>
+      <button class="btn btn-add" id="addTargetBtn">+ Add Target Word</button>
       <p class="hint">Separate with commas for multiple targets. Adjacent words need no comma.</p>
     </div>
 
@@ -357,9 +389,9 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const fileInput = document.getElementById('fileInput');
 const phraseInput = document.getElementById('phraseInput');
-const targetWord = document.getElementById('targetWord');
 const downloadBtn = document.getElementById('downloadBtn');
 const uploadText = document.getElementById('uploadText');
+const targetGroupsContainer = document.getElementById('targetGroups');
 
 // Instagram Reels ratio 9:16 (1080x1920)
 const W = 1080;
@@ -368,50 +400,138 @@ canvas.width = W;
 canvas.height = H;
 
 let uploadedImage = null;
-let targetColour = '#FE5500';
 
-// Colour swatch selection
-const customSwatch = document.getElementById('customSwatch');
-const customRow = document.getElementById('customColourRow');
-const colourPicker = document.getElementById('colourPicker');
-const hexInput = document.getElementById('hexInput');
+const SWATCH_COLOURS = [
+  { hex: '#FE5500', name: 'Orange' },
+  { hex: '#FF0000', name: 'Red' },
+  { hex: '#EE9944', name: 'Yellow' },
+  { hex: '#FFED00', name: 'Bright Yellow' },
+  { hex: '#79CAC4', name: 'Blue' },
+  { hex: '#EBE3D0', name: 'Cream' },
+  { hex: '#FFFFFF', name: 'White' },
+  { hex: '#000000', name: 'Black' },
+];
 
-document.querySelectorAll('.swatch:not(.swatch-custom)').forEach(swatch => {
-  swatch.addEventListener('click', () => {
-    document.querySelector('.swatch.selected')?.classList.remove('selected');
-    swatch.classList.add('selected');
-    targetColour = swatch.dataset.colour;
-    document.getElementById('targetWord').style.color = targetColour;
-    customRow.style.display = 'none';
+let targetGroups = []; // { words, colour }
+
+function createTargetGroup(defaultColour = '#FE5500') {
+  const id = Date.now() + Math.random();
+  const group = { id, colour: defaultColour };
+  targetGroups.push(group);
+
+  const el = document.createElement('div');
+  el.className = 'target-group';
+  el.dataset.id = id;
+
+  // Header: input + remove button
+  const header = document.createElement('div');
+  header.className = 'target-group-header';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'e.g. POWERFUL or MAKE BRITAIN, AGAIN';
+  input.spellcheck = false;
+  input.style.color = defaultColour;
+  input.addEventListener('input', render);
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'btn-remove';
+  removeBtn.innerHTML = '&times;';
+  removeBtn.addEventListener('click', () => {
+    targetGroups = targetGroups.filter(g => g.id !== id);
+    el.remove();
     render();
   });
-});
 
-customSwatch.addEventListener('click', () => {
-  document.querySelector('.swatch.selected')?.classList.remove('selected');
-  customSwatch.classList.add('selected');
-  customRow.style.display = 'flex';
-  targetColour = colourPicker.value;
-  document.getElementById('targetWord').style.color = targetColour;
-  render();
-});
+  header.appendChild(input);
+  header.appendChild(removeBtn);
+  el.appendChild(header);
 
-colourPicker.addEventListener('input', () => {
-  targetColour = colourPicker.value;
-  hexInput.value = colourPicker.value.toUpperCase();
-  document.getElementById('targetWord').style.color = targetColour;
-  render();
-});
+  // Colour swatches
+  const picker = document.createElement('div');
+  picker.className = 'colour-picker';
 
-hexInput.addEventListener('input', () => {
-  let val = hexInput.value;
-  if (!val.startsWith('#')) val = '#' + val;
-  if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-    targetColour = val;
-    colourPicker.value = val;
-    document.getElementById('targetWord').style.color = targetColour;
+  SWATCH_COLOURS.forEach(c => {
+    const sw = document.createElement('div');
+    sw.className = 'swatch' + (c.hex === defaultColour ? ' selected' : '');
+    sw.style.background = c.hex;
+    sw.title = c.name;
+    sw.dataset.colour = c.hex;
+    if (c.hex === '#000000') sw.style.borderColor = '#333';
+    sw.addEventListener('click', () => {
+      picker.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+      group.colour = c.hex;
+      input.style.color = c.hex;
+      customRow.style.display = 'none';
+      render();
+    });
+    picker.appendChild(sw);
+  });
+
+  // Custom swatch
+  const customSw = document.createElement('div');
+  customSw.className = 'swatch swatch-custom';
+  customSw.title = 'Custom colour';
+  customSw.textContent = '+';
+
+  const customRow = document.createElement('div');
+  customRow.className = 'custom-colour-row';
+  customRow.style.display = 'none';
+
+  const colourPicker = document.createElement('input');
+  colourPicker.type = 'color';
+  colourPicker.value = '#FF00FF';
+
+  const hexInput = document.createElement('input');
+  hexInput.type = 'text';
+  hexInput.className = 'hex-input';
+  hexInput.placeholder = '#FF00FF';
+  hexInput.maxLength = 7;
+  hexInput.spellcheck = false;
+
+  customSw.addEventListener('click', () => {
+    picker.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+    customSw.classList.add('selected');
+    customRow.style.display = 'flex';
+    group.colour = colourPicker.value;
+    input.style.color = group.colour;
     render();
-  }
+  });
+
+  colourPicker.addEventListener('input', () => {
+    group.colour = colourPicker.value;
+    hexInput.value = colourPicker.value.toUpperCase();
+    input.style.color = group.colour;
+    render();
+  });
+
+  hexInput.addEventListener('input', () => {
+    let val = hexInput.value;
+    if (!val.startsWith('#')) val = '#' + val;
+    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+      group.colour = val;
+      colourPicker.value = val;
+      input.style.color = group.colour;
+      render();
+    }
+  });
+
+  customRow.appendChild(colourPicker);
+  customRow.appendChild(hexInput);
+  picker.appendChild(customSw);
+  el.appendChild(picker);
+  el.appendChild(customRow);
+
+  targetGroupsContainer.appendChild(el);
+  return el;
+}
+
+// Start with one target group
+createTargetGroup();
+
+document.getElementById('addTargetBtn').addEventListener('click', () => {
+  createTargetGroup();
 });
 
 // Wait for font to load
@@ -462,7 +582,6 @@ document.addEventListener('paste', (e) => {
 });
 
 phraseInput.addEventListener('input', render);
-targetWord.addEventListener('input', render);
 
 function render() {
   ctx.clearRect(0, 0, W, H);
@@ -493,9 +612,6 @@ function render() {
   const phrase = phraseInput.value.trim().toUpperCase();
   if (!phrase) return;
 
-  // Parse target words: comma-separated phrases, each phrase can be multiple adjacent words
-  const targetInput = targetWord.value.trim().toUpperCase();
-  const targetPhrases = targetInput.split(',').map(p => p.trim()).filter(Boolean);
   const padding = 120;
   const maxWidth = W - padding * 2;
   const fontSize = 87;
@@ -536,24 +652,32 @@ function render() {
   ctx.fillStyle = grad;
   ctx.fillRect(0, gradientTop, W, H - gradientTop);
 
-  // Build a set of target word positions across all lines
+  // Build a map of word index → colour from all target groups
   const allWords = phrase.split(/\s+/);
-  const targetSet = new Set();
-  for (const tp of targetPhrases) {
-    const tpWords = tp.split(/\s+/);
-    for (let i = 0; i <= allWords.length - tpWords.length; i++) {
-      let match = true;
-      for (let k = 0; k < tpWords.length; k++) {
-        if (allWords[i + k].replace(/[^A-Z0-9]/g, '') !== tpWords[k].replace(/[^A-Z0-9]/g, '')) {
-          match = false;
-          break;
+  const colourMap = new Map(); // wordIndex → colour
+  const groupEls = targetGroupsContainer.querySelectorAll('.target-group');
+  groupEls.forEach(el => {
+    const group = targetGroups.find(g => g.id === Number(el.dataset.id));
+    if (!group) return;
+    const input = el.querySelector('input[type="text"]');
+    const targetInput = (input.value || '').trim().toUpperCase();
+    const targetPhrases = targetInput.split(',').map(p => p.trim()).filter(Boolean);
+    for (const tp of targetPhrases) {
+      const tpWords = tp.split(/\s+/);
+      for (let i = 0; i <= allWords.length - tpWords.length; i++) {
+        let match = true;
+        for (let k = 0; k < tpWords.length; k++) {
+          if (allWords[i + k].replace(/[^A-Z0-9]/g, '') !== tpWords[k].replace(/[^A-Z0-9]/g, '')) {
+            match = false;
+            break;
+          }
+        }
+        if (match) {
+          for (let k = 0; k < tpWords.length; k++) colourMap.set(i + k, group.colour);
         }
       }
-      if (match) {
-        for (let k = 0; k < tpWords.length; k++) targetSet.add(i + k);
-      }
     }
-  }
+  });
 
   // Draw each line with target word highlighting
   let wordIndex = 0;
@@ -564,7 +688,7 @@ function render() {
 
     for (let j = 0; j < lineWords.length; j++) {
       const w = lineWords[j];
-      ctx.fillStyle = targetSet.has(wordIndex) ? targetColour : '#ffffff';
+      ctx.fillStyle = colourMap.has(wordIndex) ? colourMap.get(wordIndex) : '#ffffff';
       ctx.fillText(w, x, y);
       x += ctx.measureText(w + ' ').width;
       wordIndex++;
