@@ -361,7 +361,7 @@ canvas {
 
     <div class="control-group">
       <label>2. Enter Phrase</label>
-      <textarea id="phraseInput" placeholder="REFORM WILL MAKE BRITAIN POWERFUL AGAIN" spellcheck="false"></textarea>
+      <textarea id="phraseInput" placeholder="" spellcheck="false"></textarea>
     </div>
 
     <div class="control-group">
@@ -429,7 +429,7 @@ function createTargetGroup(defaultColour = '#FE5500') {
 
   const input = document.createElement('input');
   input.type = 'text';
-  input.placeholder = 'e.g. POWERFUL or MAKE BRITAIN, AGAIN';
+  input.placeholder = '';
   input.spellcheck = false;
   input.style.color = defaultColour;
   input.addEventListener('input', render);
