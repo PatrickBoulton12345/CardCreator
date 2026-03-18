@@ -380,24 +380,48 @@ function render() {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
 
-  // Draw image - cover the canvas
+  // Draw image with blurred background fill
   if (uploadedImage) {
     const img = uploadedImage;
     const imgRatio = img.width / img.height;
     const canvasRatio = W / H;
-    let sx, sy, sw, sh;
+
+    // Step 1: Draw blurred, zoomed-in version covering entire canvas
+    ctx.save();
+    ctx.filter = 'blur(40px) brightness(0.5)';
+    // Cover-crop for the blur background
+    let bsx, bsy, bsw, bsh;
     if (imgRatio > canvasRatio) {
-      sh = img.height;
-      sw = img.height * canvasRatio;
-      sx = (img.width - sw) / 2;
-      sy = 0;
+      bsh = img.height;
+      bsw = img.height * canvasRatio;
+      bsx = (img.width - bsw) / 2;
+      bsy = 0;
     } else {
-      sw = img.width;
-      sh = img.width / canvasRatio;
-      sx = 0;
-      sy = (img.height - sh) / 2;
+      bsw = img.width;
+      bsh = img.width / canvasRatio;
+      bsx = 0;
+      bsy = (img.height - bsh) / 2;
     }
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+    // Draw slightly oversize to avoid blur edge artifacts
+    ctx.drawImage(img, bsx, bsy, bsw, bsh, -40, -40, W + 80, H + 80);
+    ctx.restore();
+
+    // Step 2: Draw sharp image fitted (contain) and centered
+    let dw, dh, dx, dy;
+    if (imgRatio > canvasRatio) {
+      // Image is wider than canvas — fit to width
+      dw = W;
+      dh = W / imgRatio;
+      dx = 0;
+      dy = (H - dh) / 2;
+    } else {
+      // Image is taller than canvas — fit to height
+      dh = H;
+      dw = H * imgRatio;
+      dx = (W - dw) / 2;
+      dy = 0;
+    }
+    ctx.drawImage(img, dx, dy, dw, dh);
   }
 
   // Draw text overlay
