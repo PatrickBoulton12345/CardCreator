@@ -171,6 +171,55 @@ input[type="text"]:focus {
   border-color: #fff;
 }
 
+.swatch-custom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #888;
+  background: #222 !important;
+  border: 2px dashed #555;
+}
+
+.swatch-custom:hover { color: #fff; border-color: #888; }
+.swatch-custom.selected { border-style: solid; border-color: #fff; color: #fff; }
+
+.custom-colour-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.custom-colour-row input[type="color"] {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: none;
+  padding: 0;
+}
+
+.custom-colour-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.custom-colour-row input[type="color"]::-webkit-color-swatch { border: none; border-radius: 6px; }
+
+.hex-input {
+  width: 100px;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #fff;
+  font-family: 'Octarine', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.hex-input:focus { outline: none; border-color: #666; }
+
 .hint {
   font-size: 12px;
   color: #555;
@@ -274,11 +323,17 @@ canvas {
       <input type="text" id="targetWord" placeholder="e.g. POWERFUL or MAKE BRITAIN, AGAIN" spellcheck="false">
       <div class="colour-picker">
         <div class="swatch selected" data-colour="#FE5500" style="background:#FE5500;" title="Orange"></div>
+        <div class="swatch" data-colour="#FF0000" style="background:#FF0000;" title="Red"></div>
         <div class="swatch" data-colour="#EE9944" style="background:#EE9944;" title="Yellow"></div>
         <div class="swatch" data-colour="#79CAC4" style="background:#79CAC4;" title="Blue"></div>
         <div class="swatch" data-colour="#EBE3D0" style="background:#EBE3D0;" title="Cream"></div>
         <div class="swatch" data-colour="#FFFFFF" style="background:#FFFFFF;" title="White"></div>
         <div class="swatch" data-colour="#000000" style="background:#000000;" title="Black"></div>
+        <div class="swatch swatch-custom" id="customSwatch" title="Custom colour">+</div>
+      </div>
+      <div class="custom-colour-row" id="customColourRow" style="display:none;">
+        <input type="color" id="colourPicker" value="#FF00FF">
+        <input type="text" id="hexInput" class="hex-input" placeholder="#FF00FF" maxlength="7" spellcheck="false">
       </div>
       <p class="hint">Separate with commas for multiple targets. Adjacent words need no comma.</p>
     </div>
@@ -315,14 +370,47 @@ let uploadedImage = null;
 let targetColour = '#FE5500';
 
 // Colour swatch selection
-document.querySelectorAll('.swatch').forEach(swatch => {
+const customSwatch = document.getElementById('customSwatch');
+const customRow = document.getElementById('customColourRow');
+const colourPicker = document.getElementById('colourPicker');
+const hexInput = document.getElementById('hexInput');
+
+document.querySelectorAll('.swatch:not(.swatch-custom)').forEach(swatch => {
   swatch.addEventListener('click', () => {
     document.querySelector('.swatch.selected')?.classList.remove('selected');
     swatch.classList.add('selected');
     targetColour = swatch.dataset.colour;
     document.getElementById('targetWord').style.color = targetColour;
+    customRow.style.display = 'none';
     render();
   });
+});
+
+customSwatch.addEventListener('click', () => {
+  document.querySelector('.swatch.selected')?.classList.remove('selected');
+  customSwatch.classList.add('selected');
+  customRow.style.display = 'flex';
+  targetColour = colourPicker.value;
+  document.getElementById('targetWord').style.color = targetColour;
+  render();
+});
+
+colourPicker.addEventListener('input', () => {
+  targetColour = colourPicker.value;
+  hexInput.value = colourPicker.value.toUpperCase();
+  document.getElementById('targetWord').style.color = targetColour;
+  render();
+});
+
+hexInput.addEventListener('input', () => {
+  let val = hexInput.value;
+  if (!val.startsWith('#')) val = '#' + val;
+  if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+    targetColour = val;
+    colourPicker.value = val;
+    document.getElementById('targetWord').style.color = targetColour;
+    render();
+  }
 });
 
 // Wait for font to load
