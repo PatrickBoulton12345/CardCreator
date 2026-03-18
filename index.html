@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Card Creator</title>
+<title>Card Creator — Instagram</title>
 <style>
 @font-face {
   font-family: 'Octarine';
@@ -204,7 +204,7 @@ input[type="text"]:focus {
   background: #000;
   border-radius: 12px;
   overflow: hidden;
-  aspect-ratio: 9/16;
+  aspect-ratio: 4/5;
   border: 1px solid #333;
 }
 
@@ -268,9 +268,9 @@ const targetWord = document.getElementById('targetWord');
 const downloadBtn = document.getElementById('downloadBtn');
 const uploadText = document.getElementById('uploadText');
 
-// TikTok portrait ratio 1080x1920
+// Instagram feed ratio 4:5 (1080x1350)
 const W = 1080;
-const H = 1920;
+const H = 1350;
 canvas.width = W;
 canvas.height = H;
 
