@@ -231,7 +231,7 @@ canvas {
       <div class="upload-area" id="uploadArea">
         <input type="file" id="fileInput" accept="image/*">
         <span class="icon">📷</span>
-        <p id="uploadText">Click or drag an image here</p>
+        <p id="uploadText">Click, drag, or paste (Ctrl+V) an image</p>
       </div>
     </div>
 
@@ -296,6 +296,31 @@ fileInput.addEventListener('change', (e) => {
     img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
+});
+
+// Paste image from clipboard
+document.addEventListener('paste', (e) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      const file = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          uploadedImage = img;
+          uploadText.textContent = 'Pasted from clipboard';
+          downloadBtn.disabled = false;
+          render();
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+      break;
+    }
+  }
 });
 
 phraseInput.addEventListener('input', render);
