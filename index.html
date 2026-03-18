@@ -380,13 +380,11 @@ function render() {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
 
-  // Draw image: cover-crop to fill canvas, then blur top & bottom edges
+  // Draw image - cover the canvas
   if (uploadedImage) {
     const img = uploadedImage;
     const imgRatio = img.width / img.height;
     const canvasRatio = W / H;
-
-    // Cover-crop: fill entire canvas, crop overflow
     let sx, sy, sw, sh;
     if (imgRatio > canvasRatio) {
       sh = img.height;
@@ -399,36 +397,7 @@ function render() {
       sx = 0;
       sy = (img.height - sh) / 2;
     }
-
-    // Step 1: Draw blurred version full-canvas
-    ctx.save();
-    ctx.filter = 'blur(30px)';
-    ctx.drawImage(img, sx, sy, sw, sh, -30, -30, W + 60, H + 60);
-    ctx.restore();
-
-    // Step 2: Draw sharp version in the centre, clipped to leave blurred edges
-    const blurBand = 120; // px of blur at top and bottom
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, blurBand, W, H - blurBand * 2);
-    ctx.clip();
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
-    ctx.restore();
-
-    // Step 3: Feather the transition with gradient masks
-    // Top feather: blend from blurred to sharp
-    const topGrad = ctx.createLinearGradient(0, blurBand, 0, blurBand + 60);
-    topGrad.addColorStop(0, 'rgba(0,0,0,0.35)');
-    topGrad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = topGrad;
-    ctx.fillRect(0, blurBand, W, 60);
-
-    // Bottom feather
-    const botGrad = ctx.createLinearGradient(0, H - blurBand, 0, H - blurBand - 60);
-    botGrad.addColorStop(0, 'rgba(0,0,0,0.35)');
-    botGrad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = botGrad;
-    ctx.fillRect(0, H - blurBand - 60, W, 60);
   }
 
   // Draw text overlay
@@ -462,7 +431,7 @@ function render() {
   if (currentLine) lines.push(currentLine);
 
   const textBlockHeight = lines.length * lineHeight;
-  const textStartY = H - textBlockHeight - padding - 20;
+  const textStartY = H - textBlockHeight - padding - 80;
 
   // Black gradient fade behind text
   const gradientTop = textStartY - 180;
