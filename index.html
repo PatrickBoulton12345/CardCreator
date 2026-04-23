@@ -348,6 +348,35 @@ canvas {
 canvas.draggable { cursor: grab; }
 canvas.dragging { cursor: grabbing; }
 
+.banner {
+  width: 100%;
+  background: #FFED00;
+  color: #000;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.banner-close {
+  background: transparent;
+  border: none;
+  color: #000;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.banner-close:hover { opacity: 0.6; }
+
 @media (max-width: 700px) {
   .app { flex-direction: column-reverse; align-items: center; }
   .controls, .preview-wrap { max-width: 100%; min-width: unset; width: 100%; }
@@ -355,6 +384,11 @@ canvas.dragging { cursor: grabbing; }
 </style>
 </head>
 <body>
+
+<div class="banner" id="featureBanner">
+  <span>NEW: Drag the image in the preview to reposition it left or right.</span>
+  <button class="banner-close" id="bannerClose" aria-label="Dismiss">&times;</button>
+</div>
 
 <h1>CARD CREATOR</h1>
 
@@ -396,6 +430,18 @@ canvas.dragging { cursor: grabbing; }
 </div>
 
 <script>
+// Dismissable feature banner
+const featureBanner = document.getElementById('featureBanner');
+const BANNER_KEY = 'cardCreator.banner.imagePan.dismissed';
+if (localStorage.getItem(BANNER_KEY) === '1') {
+  featureBanner.style.display = 'none';
+} else {
+  document.getElementById('bannerClose').addEventListener('click', () => {
+    featureBanner.style.display = 'none';
+    try { localStorage.setItem(BANNER_KEY, '1'); } catch (_) {}
+  });
+}
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const fileInput = document.getElementById('fileInput');
